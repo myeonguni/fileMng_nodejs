@@ -1,0 +1,33 @@
+{
+  "name": "codigm",
+  "version": "1.0.0",
+  "description": "-> node app",
+  "main": "app.js",
+  "dependencies": {
+    "adm-zip": "^0.4.7",
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
+    "date-utils": "^1.2.21",
+    "ejs": "^2.5.2",
+    "errorhandler": "^1.4.3",
+    "everyauth": "^0.4.9",
+    "express": "^4.14.0",
+    "express-session": "^1.14.1",
+    "fstream": "^1.0.10",
+    "method-override": "^2.3.6",
+    "mkdirp": "^0.5.1",
+    "mongodb": "^2.2.11",
+    "mongoskin": "^2.1.0",
+    "morgan": "^1.7.0",
+    "multer": "^1.2.0",
+    "rimraf": "^2.5.4",
+    "socket.io": "^1.5.1",
+    "stylus": "^0.54.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "myeongun",
+  "license": "ISC"
+}

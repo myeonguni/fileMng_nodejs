@@ -1,0 +1,64 @@
+<title>nodejs_fileMng - Myeong-Un Ryu(9182)</title>
+
+<script type="text/javascript" src="/default/jquery-3.1.1.min.js"></script>
+<link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/bootstrap/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="/default/main-style.css">
+<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+
+<div id="wrap">
+	<div class="container">
+		<h1 class="page-header">
+			<img src="/default/logo.png" width="120px">
+		</h1>
+		<p class="lead">Node.js_FileMng.WebApp</p><br>
+		<div>
+			<div class="menu">
+				<ul class="nav nav-pills">
+					<li class="active">
+						<a href="/">Home</a>
+					</li>
+					<% if (user) { %>
+					<li>
+						<a href="/application">Application</a>
+					</li>
+					<li>
+						<a href="/logout">Logout</a>
+					</li>
+					<% } else { %>
+					<li>
+						<a href="/login">Login</a>
+					</li>
+					<li>
+						<a href="/join">Join</a>
+					</li>
+					<% } %>
+				</ul>
+			</div>
+		</div>
+		<div class="content">
+			<div class="col-md-6 col-md-offset-3">
+				<h2>Summary</h2>
+				<div></div>
+				<div>
+					<ul>
+						<li>Noddde.js 설치 / Socket.io 설치 / MongoDB 설치 해보기 (O)</li>
+						<li>Node.js + Socket.io + MongoDB를 이용한 “웹 어플리케이션” 만들기 (O)</li>
+						<li>jQuery / Bootstrap 이용해보기 (O)</li>
+					</ul>
+					<ul>
+						<li>로그인 / 로그아웃 기능 (O)</li>
+						<li>파일 매니저 기능 (O)</li>
+						<li>채팅 기능 (O)</li>
+						<li>레이아웃 기능 (O)</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<footer>
+	<div class="container">
+		<p>Copyright © 2016 | <a href="https://www.myeonguni.com">myeonguni.com</a></p>
+	</div>
+</footer>

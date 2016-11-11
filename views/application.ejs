@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	    <meta charset="UTF-8">
+	    <title>nodejs_fileMng - Myeong-Un Ryu(9182)</title>
+	    <!-- jquery lib load -->
+	    <script type="text/javascript" src="/default/jquery-3.1.1.min.js"></script>
+
+	    <!-- bootstrap lib load -->
+	    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+	    <link rel="stylesheet" href="/bootstrap/css/bootstrap-theme.min.css">
+	    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+
+	    <!-- jstree lib load -->
+	    <link rel="stylesheet" href="/jstree/themes/default/style.min.css">
+	    <script type="text/javascript" src="/jstree/jstree.min.js"></script>
+
+	    <!-- codemirror lib load -->
+	   	<link rel="stylesheet" href="/codemirror/monokai.css">
+	    <link rel="stylesheet" href="/codemirror/codemirror.css">
+	    <script type="text/javascript" src="/codemirror/codemirror.js"></script>
+	    <script type="text/javascript" src="/codemirror/javascript.js"></script>
+	    <script type="text/javascript" src="/codemirror/sublime.js"></script>
+  	    <!-- codemirror & loadingIMG 관련 -->
+	    <link rel="stylesheet" href="/default/app-style.css">
+
+	    <!-- socket.io lib load -->
+   		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+   	</head>
+
+   	<style>
+		#messages { list-style-type: none; margin: 0; padding: 0; }
+		#messages li { padding: 5px 10px; }
+		#messages li:nth-child(odd) { background: #eee; }
+		#messages2 { list-style-type: none; margin: 0; padding: 0; }
+		#messages2 li { padding: 5px 10px; }
+		#messages2 li:nth-child(odd) { background: #eee; }
+   	</style>
+	<body>
+	<!-- bootrap nav -->
+	<nav style="margin-bottom:0px;" class="navbar">
+		<div class="container-fluid">
+			<div class="navbar-header"><a href="#" style="color:black;" class="navbar-brand">CODIGM</a></div>
+			<ul class="nav navbar-nav"></ul>
+			<ul class="nav navbar-nav navbar-right">
+				<li><a href="/" style="color:black;"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+				<li><a href="/application" style="color:black;"><span class="glyphicon glyphicon-edit"></span> Application</a></li>
+				<li><a href="/logout" style="color:black;"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<!-- easyUI -->
+	<div id="layout" style="width:100%; height:350px;" class="easyui-layout">
+		<!-- 파일 트리(구조) -->
+		<div id="layout-west" data-options="region:'west',split:true" title="Project" style="width:220px;">
+			<div style="margin: 15px 5px 0px 5px;">
+				<% if (isUpload==1) { %>
+				<!-- jsTree 업로드된 프로젝트 디렉토리 -->
+				<div id="tree"></div>
+				<% } else { %>
+				<form id="upForm" action="/application" method="post" enctype="multipart/form-data">
+					<label style="color:red">Project(zip | tar) 파일이 존재하지 않습니다. 아래 [파일 선택] 버튼을 클릭하여 업로드해주세요.</label>
+					<input id="upFile" type="file" name="upFile"><br>
+					<input type="button" value="업로드 하기" style="width:100%" onclick="getFileInfo('upFile');">
+				</form>
+				<% } %>
+			</div>
+		</div>
+		<!-- 파일 에디터 -->
+		<div id="layout-center" data-options="region:'center',title:'Editor'"></div>
+		<!-- 채팅 -->
+		<div id="layout-east" data-options="region:'east',split:true" title="Chatting" style="width:300px;">
+			<!-- 전체 / 귓속말 탭 -->
+			<div class="easyui-tabs" style="width:100%; height:100%">
+				<!-- 전체 채팅 -->
+		        <div title="전체" style="padding:5px">
+		        	<div id="allChat" style="width:100%; height:90%; border:0px; overflow:auto;">
+						<ul id="messages"></ul>
+		        	</div>
+				    <form id="chat" action="" onsubmit="return submitfunction();" >
+						<input type="hidden" id="user" value="<%=userId%>" />
+						<input id="m" style="width:70%; margin-left:10px;" autocomplete="off" placeholder="메시지를 입력해주세요." />
+						<input type="submit" id="button" value="전송" style="width:18%;"/> 
+				    </form>
+		        </div>
+		        <!-- 귓속말 채팅 -->
+		        <div title="귓속말(쪽지)" style="padding:10px">
+		        	<div id="whisferChat" style="width:100%; height:90%; border:0px; overflow:auto;">
+						<ul id="messages2"></ul>
+		        	</div>
+				    <form id="chat2" action="" onsubmit="return submitfunction2();" >
+						<input type="hidden" id="user2" value="<%=userId%>" />
+						<input id="m3" style="width:20%; margin-left:10px;" autocomplete="off" placeholder="상대방ID" />
+						<input id="m2" style="width:50%; margin-left:5px;" autocomplete="off" placeholder="메시지를 입력해주세요." />
+						<input type="submit" id="button2" value="전송" style="width:18%;"/> 
+				    </form>
+		        </div>
+		    </div>
+		</div>
+	</div>
+
+	<!-- 파일 업로드 시 로딩이미지 보여주기 -->
+	<div id="loading" style="display:none;">
+		<img id="loading-image" src="/default/loading.gif" alt="Loading..." />
+	</div>
+	
+    <script>
+    // 페이지 ui(+easyui) size 설정
+    $(function() {
+    	var layout = document.getElementById('layout');
+    	// 어플리케이션 크기를 셋팅(페이지 재 로드 시)
+    	window.addEventListener('resize', reloadPage, false);
+    	resizeLayout();
+    });
+
+	// 페이지 창 프레임 resize할 경우 페이지 재로드 하기
+	function reloadPage() {
+		location.href = "http://localhost:3000/application";
+	}
+
+	// easyui: 각 어플리케이션 레이아웃 사이즈(전체사이즈로) 지정
+	function resizeLayout() {
+		layout.style.width = window.innerWidth + 'px';
+		layout.style.height = window.innerHeight - 53 + 'px';
+	}
+
+	// 서버로 파일 업로드 전에 파일 확장자 체크
+	function getFileInfo(obj) {
+		var fileObj, pathHeader , pathMiddle, pathEnd, allFilename, fileName, extName;
+		if(obj == "[object HTMLInputElement]") {
+			fileObj = obj.value
+		} else {
+			fileObj = document.getElementById(obj).value;
+		}
+		if (fileObj != "") {
+			pathHeader = fileObj.lastIndexOf("\\");
+			pathMiddle = fileObj.lastIndexOf(".");
+			pathEnd = fileObj.length;
+			fileName = fileObj.substring(pathHeader+1, pathMiddle);
+			extName = fileObj.substring(pathMiddle+1, pathEnd);
+			allFilename = fileName+"."+extName;
+			if(extName == "zip" || extName == "tar") {
+				document.getElementById('upForm').submit();
+				// 로딩 이미지 출력
+ 				$('#loading').show();   
+				return false;
+			} else {
+				alert("압축된 프로젝트 파일만 업로드 가능합니다. (zip | tat)");
+			}
+		} else {
+			alert("먼저 업로드할 파일을 선택해주세요 !");
+			return false;
+		}
+	}
+
+	// easyui: resizeable(내용편집 레이어) 생성
+	var number = 1;
+	function add_edit_resizeable(id, text, resource){
+		// div 생성 및 데이터 셋팅
+		var str = "<div id=\"mytitle\"style=\"height:20px;background:#ddd;padding:5px;\"><div style=\"float:left;\">"+text+"</div><div style=\"float:right;\"><a onclick=\"save_item(this)\" style=\"color:black\"><span class=\"glyphicon glyphicon-floppy-disk\"></span></a> | <a onclick=\"remove_item(this)\"style=\"color:black\"><span class=\"glyphicon glyphicon-remove\"></span></a></div></div><div id=\"codeMirror\"style=\"padding:1px;width:99%;overflow:auto;\"></div><input type=\"hidden\" name=\"id\" value=\""+id+"\">";
+		var div = document.createElement('div');
+        div.setAttribute("id", "editLayer"+number);
+        div.setAttribute("style", "width:230px;height:200px;border:1px solid #ccc;z-index:"+number);
+        div.innerHTML = str;
+        // appendChild 를 이용하여 생성
+        document.getElementById('layout-center').appendChild(div);
+        // easyui(resizable, draggable 추가)
+        var editLayerId = "#editLayer"+number;
+        $(editLayerId).resizable({
+		    maxWidth:2000,
+		    maxHeight:2000
+		}).draggable({
+			handle:'#mytitle',
+			onDrag: function(e){
+				var d = e.data;
+				if (d.left < 0){d.left = 0}
+				if (d.top < 0){d.top = 0}
+				if (d.left + $(d.target).outerWidth() > $(d.parent).width()){
+					d.left = $(d.parent).width() - $(d.target).outerWidth();
+				}
+				if (d.top + $(d.target).outerHeight() > $(d.parent).height()){
+					d.top = $(d.parent).height() - $(d.target).outerHeight();
+				}
+			}
+		});
+		// codemirror 추가
+		var myCodeMirror = CodeMirror(document.getElementById("editLayer"+number).childNodes[1], {
+			value: resource,
+			lineNumbers: true,
+			mode: "javascript",
+			keyMap: "sublime",
+			autoCloseBrackets: true,
+			matchBrackets: true,
+			showCursorWhenSelecting: true,
+			theme: "monokai",
+			height: "100px",
+			tabSize: 2
+		});
+		number++;
+    }	
+
+	// easyui: resizeable(내용편집 레이어) 삭제
+    function remove_item(obj){
+		if(confirm('선택하신 편집창을 닫겠습니까?')){
+	        // removeChild 를 이용하여 삭제
+	        console.log(obj.parentNode.parentNode.parentNode);
+	        document.getElementById('layout-center').removeChild(obj.parentNode.parentNode.parentNode);
+		}
+    }
+
+	// easyui: resizeable(내용편집 레이어) 저장
+    function save_item(obj){
+		if(confirm('작성하신 내용을 저장하시겠습니까?')){
+			var fileName = obj.parentNode.parentNode.parentNode.childNodes[2].value;
+			var fileResource = obj.parentNode.parentNode.parentNode.childNodes[1].childNodes[0].CodeMirror.doc.getValue();
+			console.log(fileName);
+			$.post("application/tree/saveFile",{id: fileName, resource: fileResource}, function(data){
+				var tree = $('#tree').jstree(true);
+				tree.refresh();
+			});
+		}
+    }
+
+	// jstree: contextmenu items 함수
+	function customMenu(node){
+		var tree = $('#tree').jstree(true);
+	 
+		var items = {
+			"Create" : {
+				"separator_before"  : false,
+				"separator_after"   : true,
+				"_disabled": function (obj) {
+					if(node.icon == "jstree-file"){
+						return true;
+					}else{
+						return false;
+					}
+	            },
+				"label"             : "새로 만들기",
+				"action"            : false,
+				"submenu" :{
+					"create_file" : {
+						"seperator_before" : false,
+						"seperator_after" : false,
+						"_disabled": function (obj) {
+							if(node.icon == "jstree-file"){
+								return true;
+							}else{
+								return false;
+							}
+			            },
+						"label" : "파일",
+						action : function (obj) {
+					        $.get("application/tree/createFile?id="+node.id, function(data, status){
+					        	tree.refresh();
+					        });
+						}
+					},
+					"create_folder" : {
+						"seperator_before" : false,
+						"seperator_after" : false,
+						"_disabled": function (obj) {
+							if(node.icon == "jstree-file"){
+								return true;
+							}else{
+								return false;
+							}
+			            },
+						"label" : "폴더",
+						action : function (obj) {
+					        $.get("application/tree/createFolder?id="+node.id, function(data, status){
+					        	tree.refresh();
+					        });
+						}
+					}
+				}
+			},
+			"Rename": {
+				"separator_before": false,
+				"separator_after": false,
+				"label": "이름 바꾸기",
+				"action": function (data) { 
+                    var inst = $.jstree.reference(data.reference);
+                        obj = inst.get_node(data.reference);
+			        inst.edit(obj, null, function (node, status) {
+				        $.get("application/tree/rename?id="+node.id+"&text="+arguments[0].text, function(data, status){
+				        	tree.refresh();
+				        });
+			        });
+				}
+			},
+			"Edit": {
+				"separator_before": false,
+				"separator_after": false,
+				"_disabled": function (obj) {
+					if(node.icon == "jstree-file"){
+						return false;
+					}else{
+						return true;
+					}
+	            },
+				"label": "파일 열기",
+				"action": function (obj) { 
+			        $.get("application/tree/editFile?id="+node.id, function(data, status){
+			            // easyui를 이용한 resizeable 레이어(편집창) 동적 생성
+			            add_edit_resizeable(node.id, node.text, data);
+			        });
+				}
+			},     
+			"Remove": {
+				"separator_before": true,
+				"separator_after": false,
+				"label": "파일 삭제",
+				"action": function (obj) { 
+					if(confirm('선택하신 파일을 삭제하시겠습니까?')){
+				        $.get("application/tree/remove?id="+node.id, function(data, status){
+				        	tree.refresh();
+				        });
+					}
+				}
+			}
+		};
+		return items;
+	}
+	
+	// jstree 설정
+	$('#tree').on("changed.jstree", function (e, data) {
+		//
+	}).jstree({
+		'core' : {
+			'check_callback' : true,
+			'data' : {
+				'url' : function (node) {
+					return node.id === '#' ? 'application/tree' : 'application/tree';
+				},
+				'data' : function (node) {
+					return {
+						'id' : node.id
+					};
+				}
+			}
+		},
+		"plugins" : [ "contextmenu", "dnd" ],
+		"contextmenu": {items: customMenu}
+	});
+
+
+	// socket.io chat 설정
+	var socket = io(); 
+
+	// 전체(익명) 채팅
+	function submitfunction(){
+	  var from = $('#user').val();
+	  var message = $('#m').val();
+	  if(message != '') {
+	    socket.emit('chatMessage', from, message);
+	    $('#m').val('').focus();
+		  return false;
+	  }
+	  return false;
+	}
+
+	// 귓속말(쪽지) 채팅
+	function submitfunction2(){
+	  var from = $('#user2').val();
+	  var message = $('#m2').val();
+	  var to = $('#m3').val();
+	  if(to==""){
+	  	alert("상대방 ID를 입력해주세요.")
+	    return false;
+	  }
+	  if(message != '') {
+	    socket.emit('chatMessage2', from, to, message);
+	    $('#m2').val('').focus();
+	      return false;
+	  }
+	  return false;
+	}
+
+	socket.on('chatMessage', function(from, msg){
+	  var me = $('#user').val();
+	  var color = (from == me) ? 'black' : '#009afd';
+	  var from = (from == me) ? '나' : '익명';
+	  $('#messages').append('<li><b style="color:' + color + '">' + from + '</b>: ' + msg + '</li>');
+	  $('#allChat').scrollTop($('#allChat').prop('scrollHeight'));
+	});
+
+	socket.on('chatMessage2', function(from, msg){
+	  var me = $('#user2').val();
+	  var fromSplit = from.split("→");
+	  var color = (fromSplit[0] == me) ? 'black' : '#009afd';
+	  $('#messages2').append('<li><b style="color:' + color + '">' + from + '</b>: ' + msg + '</li>');
+	  $('#whisperChat').scrollTop($('#whisperChat').prop('scrollHeight'));
+	});
+
+	$(document).ready(function(){
+	  socket.emit('setAllChat', 'set', 'set');
+	  socket.emit('setWhisperChat', '<%=userId%>', 'set');
+	});
+	 
+    </script>
+
+    <!-- easyui lib load -->
+    <link rel="stylesheet" type="text/css" href="/easyui/easyui.css">
+    <script type="text/javascript" src="/easyui/jquery.easyui.min.js"></script>
+	</body>
+</html>

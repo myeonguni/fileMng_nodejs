@@ -1,0 +1,60 @@
+<title>nodejs_fileMng - Myeong-Un Ryu(9182)</title>
+
+<script type="text/javascript" src="/default/jquery-3.1.1.min.js"></script>
+<link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/bootstrap/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="/default/main-style.css">
+<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+
+<div id="wrap">
+	<div class="container">
+		<h1 class="page-header">
+			<img src="/default/logo.png" width="120px">
+		</h1>
+		<p class="lead">Node.js_FileMng.WebApp</p><br>
+		<div>
+			<div class="menu">
+				<ul class="nav nav-pills">
+					<li>
+						<a href="/">Home</a>
+					</li>
+					<li>
+						<a href="/login">Login</a>
+					</li>
+					<li class="active">
+						<a href="/join">Join</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div class="content">
+			<div class="col-md-4 col-md-offset-4">
+				<div style="color:red; margin-bottom:5px;" class="text-center">
+					<%=error%>
+				</div>
+				<h2>Join</h2>
+				<div>
+					<form action="/join" method="POST">
+						<p>
+							<input name="email" type="text" placeholder="gildong.hong@goorm.io" class="form-control">
+						</p>
+						<p>
+							<input name="password" type="password" placeholder="****" class="form-control">
+						</p>
+						<p>
+							<button type="submit" class="btn btn-lg btn-primary btn-block">Join</button>
+						</p>
+						<p class="text-right">
+							이미 회원이신가요? |&nbsp;<a href="/login">로그인</a>
+						</p>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<footer>
+	<div class="container">
+		<p>Copyright © 2016 | <a href="https://www.myeonguni.com">myeonguni.com</a></p>
+	</div>
+</footer>
